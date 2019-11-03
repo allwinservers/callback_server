@@ -3834,7 +3834,7 @@ class LastPass_JIAHUI(LastPassBase):
             return (False,str(e))
 
     def call_run(self):
-        self.check_sign()
+        # self.check_sign()
         if not self.data.get("amount") :
             raise PubErrorCustom("金额不能为空!")
         if not self.data.get("mchOrderNo"):
