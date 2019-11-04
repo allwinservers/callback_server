@@ -4232,6 +4232,92 @@ class LastPass_YSLH(LastPassBase):
 
             PayCallLastPass().run(order=order)
 
+class LastPass_JUXINGNEW(LastPassBase):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+
+
+        #生产环境
+        self.create_order_url="http://t01.jpttym.com/Pay_Index.html"
+        self.secret = "wpw35kn5u2jdtu4fgo7pakuxyyiqoguo"
+        self.businessId = "180778747"
+
+        self.response = None
+
+    def _sign(self):
+
+        valid_data = {}
+        # 去掉value为空的值
+        for item in self.data:
+            if str(self.data[item]) and len(str(self.data[item])):
+                valid_data[item] = self.data[item]
+
+        # 排序固定位置
+        valid_data_keys = sorted(valid_data)
+        valid_orders_data = OrderedDict()
+        for key in valid_data_keys:
+            valid_orders_data[key] = valid_data[key]
+
+        valid_orders_data['key']=self.secret
+
+        # 将数据变成待加密串
+        encrypted = str()
+        for item in valid_orders_data:
+            encrypted += "{}={}&".format(item, valid_orders_data[item])
+        encrypted = encrypted[:-1].encode("utf-8")
+        self.data['pay_md5sign'] = hashlib.md5(encrypted).hexdigest().upper()
+
+    def check_sign(self):
+        sign = self.data.pop('sign',False)
+        self._sign()
+        if self.data['pay_md5sign'] != sign:
+            raise PubErrorCustom("签名不正确")
+
+    def Md5str(src):
+        m = hashlib.md5(src.encode("utf8"))
+        return m.hexdigest().upper()
+
+    def obtaindate(self):
+        return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+
+    def _request(self):
+        result = request(method='POST', url=self.create_order_url, data=self.data, verify=True)
+        self.response = result.text
+
+    def run(self):
+        self.data.setdefault('pay_memberid',self.businessId)
+        self.data.setdefault('pay_applydate',self.obtaindate())
+        self.data.setdefault('pay_callbackurl',url_join("/pay/#/juli"))
+        self._sign()
+
+        self.data.setdefault('pay_productname',"商品")
+
+        try:
+            self._request()
+            return (True,self.response)
+        except Exception as e:
+            return (False,str(e))
+
+    def call_run(self):
+        # self.check_sign()
+        # if not self.data.get("memberid") or self.data.get("memberid")!= self.businessId:
+        #     raise PubErrorCustom("商户ID不存在!")
+        # if not self.data.get("amount") :
+        #     raise PubErrorCustom("金额不能为空!")
+        # if not self.data.get("orderid"):
+        #     raise PubErrorCustom("商户订单号为空!")
+
+        if self.data.get("returncode") == '00':
+            try:
+                order = Order.objects.select_for_update().get(ordercode=self.data.get("orderid"))
+            except Order.DoesNotExist:
+                raise PubErrorCustom("订单号不正确!")
+
+            if order.status == '0':
+                raise PubErrorCustom("订单已处理!")
+
+            PayCallLastPass().run(order=order)
+
 if __name__=="__main__":
 
     request_data = {
