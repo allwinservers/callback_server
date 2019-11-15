@@ -176,7 +176,7 @@ class PayCallBase(object) :
             result = request('POST', url=urllib.parse.unquote(self.order_obj.notifyurl), data=request_data , json=request_data, verify=False)
 
             logger.info("返回值:{}".format(result.text))
-            if result.text != 'SUCCESS':
+            if result.text.strip() != 'SUCCESS':
                 logger.error("请求对方服务器错误{}".format(str(result.text)))
                 self.order_obj.down_status = '2'
             else:
