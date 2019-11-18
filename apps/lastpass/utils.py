@@ -1,6 +1,5 @@
 from requests import request
 import json
-from urllib.parse import urlencode
 from collections import OrderedDict
 import hashlib
 from libs.utils.mytime import UtilTime
@@ -8,7 +7,7 @@ from utils.exceptions import PubErrorCustom
 from apps.order.models import Order
 from apps.paycall.utils import PayCallLastPass
 from apps.utils import url_join
-import time,random
+import time
 from libs.utils.log import logger
 import demjson
 
@@ -16,85 +15,9 @@ from Crypto.Cipher import AES
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA,SHA256
+from apps.pay.models import PayPass
 
 import base64
-#
-# if __name__ == '__main__':
-#     data = {
-#         "body" : "1",
-#         'charset'  : 'utf-8',
-#         'isApp' : 'web',
-#         'merchantId' : '102000000002524',
-#         'notifyUrl' : 'http://allwin6666.com/api/lastpass/lastpass_callback',
-#         "returnUrl" : "http://allwin6666.com/api/lastpass/lastpass_callback",
-#         "orderNo" : "4",
-#         "paymentType" : "1",
-#         'paymethod' : 'bankPay',
-#         'defaultbank' : 'ALIPAY',
-#         'service' : 'online_pay',
-#         'title' : '电脑',
-#         'totalFee' : 401.00
-#     }
-#
-#     sign(data)
-#     data['sign'] = sign(data)
-#     data['signType'] = "SHA"
-#     print(data)
-#
-#     url = 'https://ebank.ssfoo.vip/payment/v1/order/{}-{}'.format(data['merchantId'],data['orderNo'])
-#
-#     result = request(method='POST', url=url, data=data, verify=True)
-#     print(result.url)
-#
-#     print(result)
-#
-#
-# class SignBase(object):
-#
-#     def __init__(self):
-#         pass
-#
-#     def jm_sign(self,data):
-#         new_dict = OrderedDict()
-#         new_data = []
-#         for item in data:
-#             if data[item] and len(data[item]):
-#                 new_data[item] = data[item]
-#         keys = sorted(new_data)
-#         for item in keys:
-#             new_dict[item] = data[item]
-#
-#         for key in data:
-#             new_dict[key] = data[key]
-#
-#         key = '89d50bea1f06406abaf73997a822ecd6'
-#
-#         j = ""
-#         for item in new_dict:
-#             j += "{}={}&".format(item, new_dict[item])
-#         new_dict = (j[:-1] + key)
-#         print(new_dict)
-#         new_dict = new_dict.encode("utf-8")
-#
-#         return hashlib.sha1(new_dict).hexdigest()
-#
-#     def gaozong_sign(self,data):
-#
-#         new_dict = OrderedDict()
-#         keys = sorted(data)
-#         for item in keys:
-#             new_dict[item] = data[item]
-#
-#         for key in data:
-#             new_dict[key] = data[key]
-#         j = ""
-#         for item in new_dict:
-#             j += "{}={}&".format(item, new_dict[item])
-#         new_dict = j[:-1]
-#         new_dict = new_dict.encode("utf-8")
-#         print(new_dict)
-#
-#         return hashlib.md5(new_dict).hexdigest()
 
 class LastPassBase(object):
 
@@ -104,6 +27,32 @@ class LastPassBase(object):
 
     def _sign(self):
         pass
+
+
+    def call_run(self,request):
+
+        payObj = PayPass.objects.filter(callback_ip=request.META.get("HTTP_X_REAL_IP"))
+
+        if payObj.exists():
+            payObj=payObj[0]
+        else:
+            raise PubErrorCustom("拒绝访问")
+
+        rules = payObj.rules
+
+        if str(self.data.get(rules["callback"]["callback_codeKey"])) == rules["callback"]["callback_ok"]:
+            try:
+                order = Order.objects.select_for_update().get(ordercode=self.data.get(rules["callback"]["callback_key"]))
+            except Order.DoesNotExist:
+                raise PubErrorCustom("订单号不正确!")
+
+            if order.status == '0':
+                raise PubErrorCustom("订单已处理!")
+
+            PayCallLastPass().run(order=order)
+
+        return rules["callback"]["callback_rvalue"]
+
 
 class LastPass_JLF(LastPassBase):
 
