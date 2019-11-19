@@ -32,6 +32,9 @@ class LastPassBase(object):
     def call_run(self,request):
 
         callback_ip = request.META.get("HTTP_X_REAL_IP")
+
+        logger.info("回调IP：{}".format(callback_ip))
+
         payObj = PayPass.objects.filter(callback_ip=callback_ip)
 
         if payObj.exists():
@@ -41,7 +44,6 @@ class LastPassBase(object):
 
         rules = payObj.rules
 
-        logger.info("回调IP：{}".format(callback_ip))
         logger.info("规则：{}".format(rules["callback"]))
         logger.info("回调数据：{}".format(self.data))
 
