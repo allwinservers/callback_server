@@ -47,9 +47,9 @@ class LastPassBase(object):
         logger.info("规则：{}".format(rules["callback"]))
         logger.info("回调数据：{}".format(self.data))
 
-        if str(self.data.get(rules["callback"]["callback_codeKey"])) == rules["callback"]["callback_ok"]:
+        if str(self.data.get(rules["callback"]["codeKey"])) == rules["callback"]["ok"]:
             try:
-                order = Order.objects.select_for_update().get(ordercode=self.data.get(rules["callback"]["callback_key"]))
+                order = Order.objects.select_for_update().get(ordercode=self.data.get(rules["callback"]["key"]))
             except Order.DoesNotExist:
                 raise PubErrorCustom("订单号不正确!")
 
@@ -58,7 +58,7 @@ class LastPassBase(object):
 
             PayCallLastPass().run(order=order)
 
-            return rules["callback"]["callback_rvalue"]
+            return rules["callback"]["rvalue"]
 
 
 class LastPass_JLF(LastPassBase):
