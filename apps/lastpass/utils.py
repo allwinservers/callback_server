@@ -58,7 +58,7 @@ class LastPassBase(object):
 
             PayCallLastPass().run(order=order)
 
-        return rules["callback"]["callback_rvalue"]
+            return rules["callback"]["callback_rvalue"]
 
 
 class LastPass_JLF(LastPassBase):

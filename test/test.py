@@ -23,10 +23,12 @@ class DecimalEncoder(json.JSONEncoder):
         return super(DecimalEncoder, self)._iterencode(o, markers)
 
 if __name__ == '__main__':
-    # d={
-    #     "a":decimal.Decimal('3.00')
-    # }
-    # print(demjson.encode(d))
 
-    print(format(2.0010, '.2f'))
-    print(type(format(2.0010, '.2f')))
+
+    data=list()
+    with open('./1.txt','r') as f:
+        for line in f.readlines():
+            line = line.strip('\n')
+            data.append(line)
+
+    print(len(data))
