@@ -61,6 +61,9 @@ class LastPassBase(object):
             return rules["callback"]["rvalue"]
 
 
+        return "error"
+
+
 class LastPass_JLF(LastPassBase):
 
     def __init__(self,**kwargs):
