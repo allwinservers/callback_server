@@ -35,12 +35,24 @@ class LastPassBase(object):
 
         logger.info("回调IP：{}".format(callback_ip))
 
-        payObj = PayPass.objects.filter(callback_ip=callback_ip)
-
+        payObj = PayPass.objects.filter()
+        payObjTmp=None
         if payObj.exists():
-            payObj=payObj[0]
+            for item in payObj:
+                print(item.callback_ip)
+                for itemtmp in item.callback_ip.split(","):
+                    print(itemtmp)
+                    if str(itemtmp).strip() == str(callback_ip).strip():
+                        payObjTmp = item
+                        break
+                if payObjTmp:
+                    break
         else:
             raise PubErrorCustom("拒绝访问")
+
+        if not payObjTmp:
+            raise PubErrorCustom("拒绝访问")
+        payObj = payObjTmp
 
         rules = json.loads(payObj.rules)
 
@@ -59,7 +71,6 @@ class LastPassBase(object):
             PayCallLastPass().run(order=order)
 
             return rules["callback"]["rvalue"]
-
 
         return "error"
 
