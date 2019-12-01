@@ -35,7 +35,7 @@ class LastPassBase(object):
 
         logger.info("回调IP：{}".format(callback_ip))
 
-        payObj = PayPass.objects.filter()
+        payObj = PayPass.objects.filter(callback_ip__contains=callback_ip)
         payObjTmp=None
         if payObj.exists():
             for item in payObj:
