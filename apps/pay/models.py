@@ -46,7 +46,7 @@ class PayPass(models.Model):
 
     custom = models.CharField(max_length=1,verbose_name="0-走自定义方式,1-走规则(rules)",default="0")
     rules = models.TextField(default="",verbose_name="接入规则")
-    callback_ip =  models.CharField(max_length=60,verbose_name="回调IP",default="",null=True)
+    callback_ip =  models.CharField(max_length=512,verbose_name="回调IP",default="",null=True)
     createtime = models.BigIntegerField(default=0)
 
     pays=None
